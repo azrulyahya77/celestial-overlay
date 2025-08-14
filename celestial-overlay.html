@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Celestial Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      color: #fff;
+      background: transparent;
+      text-align: center;
+      padding-top: 20px;
+    }
+    #celestial {
+      font-size: 2em;
+      text-shadow: 0 0 10px #000;
+    }
+    .sun {
+      color: #FFD700;
+    }
+    .moon {
+      color: #B0C4DE;
+    }
+  </style>
+</head>
+<body>
+  <div id="celestial">🌌 Loading celestial data...</div>
+
+  <script>
+    const lat = 2.8652;  // Dengkil latitude
+    const lon = 101.6781; // Dengkil longitude
+
+    async function updateCelestial() {
+      const now = new Date();
+      const isoTime = now.toISOString();
+
+      // Fetch sun data
+      const sunRes = await fetch(`https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=today`);
+      const sunData = await sunRes.json();
+
+      const sunrise = new Date(sunData.results.sunrise);
+      const sunset = new Date(sunData.results.sunset);
+
+      // Fetch moon phase
+      const moonRes = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${Math.floor(now.getTime() / 1000)}`);
+      const moonData = await moonRes.json();
+      const moonPhase = moonData[0]?.Phase || "Unknown";
+
+      const celestialDiv = document.getElementById("celestial");
+
+      if (now >= sunrise && now <= sunset) {
+        // Daytime
+        const sunEmoji = "☀️";
+        const hour = now.getHours();
+        const brightness = Math.round((1 - Math.abs(12 - hour) / 12) * 100); // Peak at noon
+        celestialDiv.innerHTML = `<span class="sun">${sunEmoji} Sun is shining (${brightness}% brightness)</span>`;
+      } else {
+        // Nighttime
+        const moonEmoji = "🌕🌖🌗🌘🌑🌒🌓🌔";
+        const phaseIndex = Math.floor(Math.random() * moonEmoji.length); // Optional: map phase to emoji
+        celestialDiv.innerHTML = `<span class="moon">${moonEmoji[phaseIndex]} Moon Phase: ${moonPhase}</span>`;
+      }
+    }
+
+    updateCelestial();
+    setInterval(updateCelestial, 60000); // Update every minute
+  </script>
+</body>
+</html>
