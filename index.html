@@ -31,24 +31,26 @@
   <div id="celestial">🌌 Loading celestial data...</div>
 
   <script>
-    const lat = 2.8652;  // Dengkil latitude
-    const lon = 101.6781; // Dengkil longitude
+    const lat = 2.8652;
+    const lon = 101.6781;
 
     async function updateCelestial() {
       const celestialDiv = document.getElementById("celestial");
       const now = new Date();
-      const today = now.toISOString().split("T")[0];
 
       try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset,moon_phase&timezone=auto`);
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset,moon_phase&timezone=auto`;
+        console.log("Fetching:", url);
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+
         const data = await res.json();
+        console.log("API response:", data);
 
-        const sunriseStr = data.daily.sunrise[0];
-        const sunsetStr = data.daily.sunset[0];
+        const sunrise = new Date(data.daily.sunrise[0]);
+        const sunset = new Date(data.daily.sunset[0]);
         const moonPhaseNum = data.daily.moon_phase[0];
-
-        const sunrise = new Date(sunriseStr);
-        const sunset = new Date(sunsetStr);
 
         const moonPhases = [
           "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
@@ -74,7 +76,7 @@
     }
 
     updateCelestial();
-    setInterval(updateCelestial, 60000); // Update every minute
+    setInterval(updateCelestial, 60000);
   </script>
 </body>
 </html>
