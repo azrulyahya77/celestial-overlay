@@ -37,38 +37,34 @@
     async function updateCelestial() {
       const celestialDiv = document.getElementById("celestial");
       const now = new Date();
+      const today = now.toISOString().split("T")[0];
 
       try {
-        // Fetch sun data
-        const sunRes = await fetch(`https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=today`);
-        const sunJson = await sunRes.json();
-        const sunrise = new Date(sunJson.results.sunrise);
-        const sunset = new Date(sunJson.results.sunset);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset,moon_phase&timezone=auto`);
+        const data = await res.json();
 
-        // Fetch moon phase
-        const timestamp = Math.floor(now.getTime() / 1000);
-        const moonRes = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${timestamp}`);
-        const moonJson = await moonRes.json();
-        const moonPhase = moonJson[0]?.Phase || "Unknown";
+        const sunriseStr = data.daily.sunrise[0];
+        const sunsetStr = data.daily.sunset[0];
+        const moonPhaseNum = data.daily.moon_phase[0];
 
-        // Determine celestial state
+        const sunrise = new Date(sunriseStr);
+        const sunset = new Date(sunsetStr);
+
+        const moonPhases = [
+          "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+          "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"
+        ];
+        const moonEmojis = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];
+        const phaseIndex = Math.round(moonPhaseNum) % 8;
+        const moonPhase = moonPhases[phaseIndex];
+        const moonEmoji = moonEmojis[phaseIndex];
+
         if (now >= sunrise && now <= sunset) {
           const sunEmoji = "☀️";
           const hour = now.getHours();
           const brightness = Math.round((1 - Math.abs(12 - hour) / 12) * 100);
           celestialDiv.innerHTML = `<span class="sun">${sunEmoji} Sun is shining (${brightness}% brightness)</span>`;
         } else {
-          const moonEmojis = {
-            "New Moon": "🌑",
-            "Waxing Crescent": "🌒",
-            "First Quarter": "🌓",
-            "Waxing Gibbous": "🌔",
-            "Full Moon": "🌕",
-            "Waning Gibbous": "🌖",
-            "Last Quarter": "🌗",
-            "Waning Crescent": "🌘"
-          };
-          const moonEmoji = moonEmojis[moonPhase] || "🌙";
           celestialDiv.innerHTML = `<span class="moon">${moonEmoji} Moon Phase: ${moonPhase}</span>`;
         }
       } catch (error) {
