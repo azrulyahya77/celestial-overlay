@@ -22,6 +22,9 @@
     .moon {
       color: #B0C4DE;
     }
+    .error {
+      color: #FF6347;
+    }
   </style>
 </head>
 <body>
@@ -32,34 +35,45 @@
     const lon = 101.6781; // Dengkil longitude
 
     async function updateCelestial() {
-      const now = new Date();
-      const isoTime = now.toISOString();
-
-      // Fetch sun data
-      const sunRes = await fetch(`https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=today`);
-      const sunData = await sunRes.json();
-
-      const sunrise = new Date(sunData.results.sunrise);
-      const sunset = new Date(sunData.results.sunset);
-
-      // Fetch moon phase
-      const moonRes = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${Math.floor(now.getTime() / 1000)}`);
-      const moonData = await moonRes.json();
-      const moonPhase = moonData[0]?.Phase || "Unknown";
-
       const celestialDiv = document.getElementById("celestial");
+      const now = new Date();
 
-      if (now >= sunrise && now <= sunset) {
-        // Daytime
-        const sunEmoji = "☀️";
-        const hour = now.getHours();
-        const brightness = Math.round((1 - Math.abs(12 - hour) / 12) * 100); // Peak at noon
-        celestialDiv.innerHTML = `<span class="sun">${sunEmoji} Sun is shining (${brightness}% brightness)</span>`;
-      } else {
-        // Nighttime
-        const moonEmoji = "🌕🌖🌗🌘🌑🌒🌓🌔";
-        const phaseIndex = Math.floor(Math.random() * moonEmoji.length); // Optional: map phase to emoji
-        celestialDiv.innerHTML = `<span class="moon">${moonEmoji[phaseIndex]} Moon Phase: ${moonPhase}</span>`;
+      try {
+        // Fetch sun data
+        const sunRes = await fetch(`https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=today`);
+        const sunJson = await sunRes.json();
+        const sunrise = new Date(sunJson.results.sunrise);
+        const sunset = new Date(sunJson.results.sunset);
+
+        // Fetch moon phase
+        const timestamp = Math.floor(now.getTime() / 1000);
+        const moonRes = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${timestamp}`);
+        const moonJson = await moonRes.json();
+        const moonPhase = moonJson[0]?.Phase || "Unknown";
+
+        // Determine celestial state
+        if (now >= sunrise && now <= sunset) {
+          const sunEmoji = "☀️";
+          const hour = now.getHours();
+          const brightness = Math.round((1 - Math.abs(12 - hour) / 12) * 100);
+          celestialDiv.innerHTML = `<span class="sun">${sunEmoji} Sun is shining (${brightness}% brightness)</span>`;
+        } else {
+          const moonEmojis = {
+            "New Moon": "🌑",
+            "Waxing Crescent": "🌒",
+            "First Quarter": "🌓",
+            "Waxing Gibbous": "🌔",
+            "Full Moon": "🌕",
+            "Waning Gibbous": "🌖",
+            "Last Quarter": "🌗",
+            "Waning Crescent": "🌘"
+          };
+          const moonEmoji = moonEmojis[moonPhase] || "🌙";
+          celestialDiv.innerHTML = `<span class="moon">${moonEmoji} Moon Phase: ${moonPhase}</span>`;
+        }
+      } catch (error) {
+        console.error("Celestial fetch error:", error);
+        celestialDiv.innerHTML = `<span class="error">⚠️ Unable to fetch celestial data</span>`;
       }
     }
 
