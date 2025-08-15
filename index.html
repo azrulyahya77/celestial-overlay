@@ -15,21 +15,28 @@
 
   <script>
     async function fetchCelestial() {
-      const res = await fetch('https://celestial-mohd.onrender.com/celestial.json');
-      const data = await res.json();
-      document.getElementById('sunrise').textContent = `Sunrise: ${data.sunrise}`;
-      document.getElementById('sunset').textContent = `Sunset: ${data.sunset}`;
-      const phase = data.moon_phase;
-      const phaseName = phase < 0.1 ? "🌑 New Moon" :
-                        phase < 0.25 ? "🌒 Waxing Crescent" :
-                        phase < 0.5 ? "🌓 First Quarter" :
-                        phase < 0.75 ? "🌔 Waxing Gibbous" :
-                        phase < 0.9 ? "🌕 Full Moon" : "🌖 Waning Gibbous";
-      document.getElementById('moonPhase').textContent = `Moon Phase: ${phaseName}`;
+      try {
+        const res = await fetch('https://celestial-proxy.vercel.app/celestial.json');
+        const data = await res.json();
+
+        document.getElementById('sunrise').textContent = `🌅 Sunrise: ${data.sunrise}`;
+        document.getElementById('sunset').textContent = `🌇 Sunset: ${data.sunset}`;
+
+        const phase = data.moon_phase;
+        const phaseName = phase < 0.1 ? "🌑 New Moon" :
+                          phase < 0.25 ? "🌒 Waxing Crescent" :
+                          phase < 0.5 ? "🌓 First Quarter" :
+                          phase < 0.75 ? "🌔 Waxing Gibbous" :
+                          phase < 0.9 ? "🌕 Full Moon" : "🌖 Waning Gibbous";
+        document.getElementById('moonPhase').textContent = `🌕 Moon Phase: ${phaseName}`;
+      } catch (err) {
+        document.body.innerHTML += `<p style="color:red;">Failed to fetch celestial data</p>`;
+        console.error("Celestial fetch error:", err);
+      }
     }
 
     fetchCelestial();
-    setInterval(fetchCelestial, 60000); // Update every minute
+    setInterval(fetchCelestial, 60000); // Refresh every minute
   </script>
 </body>
 </html>
