@@ -1,82 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>Celestial Overlay</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Cinzel', serif;
-      color: #fff;
-      background: transparent;
-      text-align: center;
-      padding-top: 20px;
-    }
-    #celestial {
-      font-size: 2em;
-      text-shadow: 0 0 10px #000;
-    }
-    .sun {
-      color: #FFD700;
-    }
-    .moon {
-      color: #B0C4DE;
-    }
-    .error {
-      color: #FF6347;
-    }
+    body { font-family: 'Segoe UI', sans-serif; color: #fff; background: #000; text-align: center; padding-top: 50px; }
+    .moon { font-size: 2em; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <div id="celestial">🌌 Loading celestial data...</div>
+  <h1>🌌 Celestial Cycles</h1>
+  <div id="sunrise"></div>
+  <div id="sunset"></div>
+  <div class="moon" id="moonPhase"></div>
 
   <script>
-    const lat = 2.8652;
-    const lon = 101.6781;
-
-    async function updateCelestial() {
-      const celestialDiv = document.getElementById("celestial");
-      const now = new Date();
-
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset,moon_phase&timezone=auto`;
-        console.log("Fetching:", url);
-
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-
-        const data = await res.json();
-        console.log("API response:", data);
-
-        const sunrise = new Date(data.daily.sunrise[0]);
-        const sunset = new Date(data.daily.sunset[0]);
-        const moonPhaseNum = data.daily.moon_phase[0];
-
-        const moonPhases = [
-          "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
-          "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"
-        ];
-        const moonEmojis = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];
-        const phaseIndex = Math.round(moonPhaseNum) % 8;
-        const moonPhase = moonPhases[phaseIndex];
-        const moonEmoji = moonEmojis[phaseIndex];
-
-        if (now >= sunrise && now <= sunset) {
-          const sunEmoji = "☀️";
-          const hour = now.getHours();
-          const brightness = Math.round((1 - Math.abs(12 - hour) / 12) * 100);
-          celestialDiv.innerHTML = `<span class="sun">${sunEmoji} Sun is shining (${brightness}% brightness)</span>`;
-        } else {
-          celestialDiv.innerHTML = `<span class="moon">${moonEmoji} Moon Phase: ${moonPhase}</span>`;
-        }
-      } catch (error) {
-        console.error("Celestial fetch error:", error);
-        celestialDiv.innerHTML = `<span class="error">⚠️ Unable to fetch celestial data</span>`;
-      }
+    async function fetchCelestial() {
+      const res = await fetch('https://celestial-mohd.onrender.com/celestial.json');
+      const data = await res.json();
+      document.getElementById('sunrise').textContent = `Sunrise: ${data.sunrise}`;
+      document.getElementById('sunset').textContent = `Sunset: ${data.sunset}`;
+      const phase = data.moon_phase;
+      const phaseName = phase < 0.1 ? "🌑 New Moon" :
+                        phase < 0.25 ? "🌒 Waxing Crescent" :
+                        phase < 0.5 ? "🌓 First Quarter" :
+                        phase < 0.75 ? "🌔 Waxing Gibbous" :
+                        phase < 0.9 ? "🌕 Full Moon" : "🌖 Waning Gibbous";
+      document.getElementById('moonPhase').textContent = `Moon Phase: ${phaseName}`;
     }
 
-    updateCelestial();
-    setInterval(updateCelestial, 60000);
+    fetchCelestial();
+    setInterval(fetchCelestial, 60000); // Update every minute
   </script>
 </body>
 </html>
